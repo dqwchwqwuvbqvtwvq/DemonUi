@@ -3,7 +3,7 @@
 --         Made By Jova
 -- ══════════════════════════════════════════════════
 -- Ganti URL di bawah dengan raw pastebin link kamu
-local DemonUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/dqwchwqwuvbqvtwvq/DemonUi/refs/heads/main/source/DemonUI.lua"))()
+local DemonUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/dqwchwqwuvbqvtwvq/DemonUi/refs/heads/main/source/DemonUIv1.lua"))()
 
 -- ── Buat Window ──────────────────────────────────
 local Window = DemonUI:CreateWindow({
