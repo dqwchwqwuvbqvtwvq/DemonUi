@@ -3,7 +3,7 @@ local DemonUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/dqwch
 local Window = DemonUI:CreateWindow({
     Title       = "Demon UI",
     SubTitle    = "Made By Jova",
-    Size        = UDim2.fromOffset(200, 200),
+    Size        = {Width = 400, Height = 465},  -- ubah Width/Height sesuka kamu
     MinimizeKey = Enum.KeyCode.RightControl,
 })
 
