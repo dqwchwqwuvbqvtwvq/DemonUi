@@ -538,12 +538,16 @@ function DemonUI:CreateWindow(opts)
             o = o or {}
             local row = Row(o.Title or "Button", o.Description, 90)
             local btn = New("TextButton", {Text = o.ButtonText or "Execute", Font = T.Font, TextSize = 12, TextColor3 = T.TextPri, BackgroundColor3 = T.AccentDark, Size = UDim2.new(0, 80, 0, 27), Position = UDim2.new(1, -88, 0.5, -13.5), AutoButtonColor = false, Parent = row}, {Corner(UDim.new(0, 6)), Stroke(T.Accent)})
+            -- hover hanya untuk PC (Mouse), skip untuk touch agar tidak flicker
             btn.MouseEnter:Connect(function() Tw(btn, {BackgroundColor3 = T.Accent},     0.14) end)
             btn.MouseLeave:Connect(function() Tw(btn, {BackgroundColor3 = T.AccentDark}, 0.14) end)
-            btn.MouseButton1Click:Connect(function()
-                Tw(btn, {Size = UDim2.new(0, 74, 0, 25)}, 0.08)
-                task.wait(0.09)
-                Tw(btn, {Size = UDim2.new(0, 80, 0, 27)}, 0.14, Enum.EasingStyle.Back)
+            btn.InputBegan:Connect(function(inp)
+                if not isTap(inp) then return end
+                Tw(btn, {BackgroundColor3 = T.Accent, Size = UDim2.new(0, 74, 0, 25)}, 0.08)
+            end)
+            btn.InputEnded:Connect(function(inp)
+                if not isTap(inp) then return end
+                Tw(btn, {BackgroundColor3 = T.AccentDark, Size = UDim2.new(0, 80, 0, 27)}, 0.14, Enum.EasingStyle.Back)
                 if o.Callback then o.Callback() end
             end)
         end
@@ -735,78 +739,6 @@ function DemonUI:CreateWindow(opts)
             end)
             function obj:Set(k) cur = k; obj.Value = k; kBtn.Text = k.Name end
             _G["DemonKeybind_" .. (id or "")] = obj
-            return obj
-        end
-
-        -- ── COLOR PICKER ──
-        function Tab:AddColorPicker(id, o)
-            o = o or {}
-            local val  = o.Default or Color3.fromRGB(88, 140, 255)
-            local row  = Row(o.Title or "Color", o.Description, 42)
-            local prev = New("TextButton", {Text = "", BackgroundColor3 = val, Size = UDim2.new(0, 30, 0, 30), Position = UDim2.new(1, -38, 0.5, -15), AutoButtonColor = false, Parent = row}, {Corner(UDim.new(0, 6)), Stroke(T.Border)})
-
-            local pOpen = false
-            local pF    = New("Frame", {BackgroundColor3 = T.Section, Size = UDim2.new(0, 224, 0, 204), Visible = false, ZIndex = 20, Parent = SG}, {Corner(UDim.new(0, 8)), Stroke(T.Border)})
-            local cv    = New("ImageLabel", {Image = "rbxassetid://698052001", BackgroundColor3 = val, Size = UDim2.new(1, -20, 0, 122), Position = UDim2.new(0, 10, 0, 10),  ZIndex = 20, Parent = pF}, {Corner(UDim.new(0, 4))})
-            local hBar  = New("ImageLabel", {Image = "rbxassetid://698053256",                         Size = UDim2.new(1, -20, 0, 16),  Position = UDim2.new(0, 10, 0, 140), ZIndex = 20, Parent = pF}, {Corner(UDim.new(0, 3))})
-            local hThumb = New("Frame",     {BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(0, 8, 1, 2), Position = UDim2.new(0, 0, 0, -1), ZIndex = 21, Parent = hBar}, {Corner(UDim.new(0, 3))})
-            local hexB  = New("TextBox",    {Text = string.format("#%02X%02X%02X", math.floor(val.R*255), math.floor(val.G*255), math.floor(val.B*255)), Font = T.FontMono, TextSize = 11, TextColor3 = T.TextPri, PlaceholderText = "#RRGGBB", BackgroundColor3 = T.SliderTrack, Size = UDim2.new(1, -20, 0, 27), Position = UDim2.new(0, 10, 0, 164), ClearTextOnFocus = false, ZIndex = 20, Parent = pF}, {Corner(UDim.new(0, 5)), Stroke(T.Border), Pad(0, 8, 0, 8)})
-
-            local obj = {Value = val}
-            local function UpdCol(c)
-                val = c; obj.Value = c; prev.BackgroundColor3 = c; cv.BackgroundColor3 = c
-                hexB.Text = string.format("#%02X%02X%02X", math.floor(c.R*255), math.floor(c.G*255), math.floor(c.B*255))
-                if o.Callback then o.Callback(c) end
-            end
-
-            local hDrag = false
-            hBar.InputBegan:Connect(function(inp)
-                if isTap(inp) then
-                    hDrag = true
-                    local p = math.clamp((inp.Position.X - hBar.AbsolutePosition.X) / hBar.AbsoluteSize.X, 0, 1)
-                    hThumb.Position = UDim2.new(p, -4, 0, -1); UpdCol(Color3.fromHSV(p, 1, 1))
-                end
-            end)
-            UIS.InputChanged:Connect(function(inp)
-                if hDrag and isMove(inp) then
-                    local p = math.clamp((inp.Position.X - hBar.AbsolutePosition.X) / hBar.AbsoluteSize.X, 0, 1)
-                    hThumb.Position = UDim2.new(p, -4, 0, -1); UpdCol(Color3.fromHSV(p, 1, 1))
-                end
-            end)
-            UIS.InputEnded:Connect(function(inp) if isTap(inp) then hDrag = false end end)
-            hexB.FocusLost:Connect(function()
-                local h = hexB.Text:gsub("#", "")
-                if #h == 6 then
-                    local r = tonumber(h:sub(1,2), 16); local g = tonumber(h:sub(3,4), 16); local b = tonumber(h:sub(5,6), 16)
-                    if r and g and b then UpdCol(Color3.fromRGB(r, g, b)) end
-                end
-            end)
-            prev.InputBegan:Connect(function(inp)
-                if not isTap(inp) then return end
-                pOpen = not pOpen
-                if pOpen then
-                    local ap = prev.AbsolutePosition
-                    pF.Position = UDim2.new(0, ap.X - 194, 0, ap.Y + 38)
-                    pF.Size = UDim2.new(0, 224, 0, 0); pF.Visible = true
-                    Tw(pF, {Size = UDim2.new(0, 224, 0, 204)}, 0.2, Enum.EasingStyle.Back)
-                else
-                    Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18)
-                    task.delay(0.2, function() pF.Visible = false end)
-                end
-            end)
-            UIS.InputBegan:Connect(function(inp)
-                if pOpen and isTap(inp) then
-                    local mp = UIS:GetMouseLocation()
-                    local lp = pF.AbsolutePosition; local ls = pF.AbsoluteSize
-                    if not (mp.X >= lp.X and mp.X <= lp.X + ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y + ls.Y) then
-                        pOpen = false
-                        Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18)
-                        task.delay(0.2, function() pF.Visible = false end)
-                    end
-                end
-            end)
-            function obj:Set(c) UpdCol(c) end
-            _G["DemonColor_" .. (id or "")] = obj
             return obj
         end
 
