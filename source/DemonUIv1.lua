@@ -87,22 +87,30 @@ local function Tw(inst, props, t, sty, dir)
     return tw
 end
 
+-- support Mouse & Touch sekaligus
+local function isTap(inp)
+    return inp.UserInputType == Enum.UserInputType.MouseButton1
+        or inp.UserInputType == Enum.UserInputType.Touch
+end
+local function isMove(inp)
+    return inp.UserInputType == Enum.UserInputType.MouseMovement
+        or inp.UserInputType == Enum.UserInputType.Touch
+end
+
 local function MakeDraggable(frame, handle)
     local drag, ds, sp = false, nil, nil
     handle.InputBegan:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+        if isTap(inp) then
             drag = true
             ds   = inp.Position
             sp   = frame.Position
         end
     end)
     handle.InputEnded:Connect(function(inp)
-        if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-            drag = false
-        end
+        if isTap(inp) then drag = false end
     end)
     UIS.InputChanged:Connect(function(inp)
-        if drag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+        if drag and isMove(inp) then
             local d = inp.Position - ds
             frame.Position = UDim2.new(
                 sp.X.Scale, sp.X.Offset + d.X,
@@ -555,6 +563,7 @@ function DemonUI:CreateWindow(opts)
                 if cb and o.Callback then o.Callback(v) end
             end
             track.MouseButton1Click:Connect(function() Set(not val, true) end)
+            track.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.Touch then Set(not val, true) end end)
             function obj:Set(v) Set(v, true) end
             _G["DemonToggle_" .. (id or "")] = obj
             return obj
@@ -592,20 +601,17 @@ function DemonUI:CreateWindow(opts)
             end
 
             hit.InputBegan:Connect(function(inp)
-                if inp.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+                if not isTap(inp) then return end
                 isDragging = true
                 Tw(thumb, {Size = UDim2.new(0, 15, 0, 15)}, 0.1, Enum.EasingStyle.Back)
                 Calc(inp.Position.X)
-                -- koneksi global HANYA saat drag aktif
                 moveConn = UIS.InputChanged:Connect(function(i2)
-                    if i2.UserInputType == Enum.UserInputType.MouseMovement then
-                        Calc(i2.Position.X)
-                    end
+                    if isMove(i2) then Calc(i2.Position.X) end
                 end)
             end)
 
             UIS.InputEnded:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 and isDragging then
+                if isTap(inp) and isDragging then
                     isDragging = false
                     Tw(thumb, {Size = UDim2.new(0, 13, 0, 13)}, 0.1)
                     if moveConn then moveConn:Disconnect(); moveConn = nil end
@@ -681,7 +687,7 @@ function DemonUI:CreateWindow(opts)
                 else Close() end
             end)
             UIS.InputBegan:Connect(function(inp)
-                if open and inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                if open and isTap(inp) then
                     local mp = UIS:GetMouseLocation(); local lp = LF.AbsolutePosition; local ls = LF.AbsoluteSize
                     if not (mp.X >= lp.X and mp.X <= lp.X + ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y + ls.Y) then Close() end
                 end
@@ -755,19 +761,19 @@ function DemonUI:CreateWindow(opts)
 
             local hDrag = false
             hBar.InputBegan:Connect(function(inp)
-                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                if isTap(inp) then
                     hDrag = true
                     local p = math.clamp((inp.Position.X - hBar.AbsolutePosition.X) / hBar.AbsoluteSize.X, 0, 1)
                     hThumb.Position = UDim2.new(p, -4, 0, -1); UpdCol(Color3.fromHSV(p, 1, 1))
                 end
             end)
             UIS.InputChanged:Connect(function(inp)
-                if hDrag and inp.UserInputType == Enum.UserInputType.MouseMovement then
+                if hDrag and isMove(inp) then
                     local p = math.clamp((inp.Position.X - hBar.AbsolutePosition.X) / hBar.AbsoluteSize.X, 0, 1)
                     hThumb.Position = UDim2.new(p, -4, 0, -1); UpdCol(Color3.fromHSV(p, 1, 1))
                 end
             end)
-            UIS.InputEnded:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.MouseButton1 then hDrag = false end end)
+            UIS.InputEnded:Connect(function(inp) if isTap(inp) then hDrag = false end end)
             hexB.FocusLost:Connect(function()
                 local h = hexB.Text:gsub("#", "")
                 if #h == 6 then
@@ -775,7 +781,8 @@ function DemonUI:CreateWindow(opts)
                     if r and g and b then UpdCol(Color3.fromRGB(r, g, b)) end
                 end
             end)
-            prev.MouseButton1Click:Connect(function()
+            prev.InputBegan:Connect(function(inp)
+                if not isTap(inp) then return end
                 pOpen = not pOpen
                 if pOpen then
                     local ap = prev.AbsolutePosition
@@ -783,14 +790,18 @@ function DemonUI:CreateWindow(opts)
                     pF.Size = UDim2.new(0, 224, 0, 0); pF.Visible = true
                     Tw(pF, {Size = UDim2.new(0, 224, 0, 204)}, 0.2, Enum.EasingStyle.Back)
                 else
-                    Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18); task.wait(0.2); pF.Visible = false
+                    Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18)
+                    task.delay(0.2, function() pF.Visible = false end)
                 end
             end)
             UIS.InputBegan:Connect(function(inp)
-                if pOpen and inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local mp = UIS:GetMouseLocation(); local lp = pF.AbsolutePosition; local ls = pF.AbsoluteSize
+                if pOpen and isTap(inp) then
+                    local mp = UIS:GetMouseLocation()
+                    local lp = pF.AbsolutePosition; local ls = pF.AbsoluteSize
                     if not (mp.X >= lp.X and mp.X <= lp.X + ls.X and mp.Y >= lp.Y and mp.Y <= lp.Y + ls.Y) then
-                        pOpen = false; Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18); task.wait(0.2); pF.Visible = false
+                        pOpen = false
+                        Tw(pF, {Size = UDim2.new(0, 224, 0, 0)}, 0.18)
+                        task.delay(0.2, function() pF.Visible = false end)
                     end
                 end
             end)
