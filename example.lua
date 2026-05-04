@@ -93,12 +93,6 @@ Visual:AddToggle("ESP", {
     Callback = function(v) _G.ESP = v end
 })
 
-Visual:AddColorPicker("ESPColor", {
-    Title    = "ESP Color",
-    Default  = Color3.fromRGB(88, 140, 255),
-    Callback = function(c) _G.ESPColor = c end
-})
-
 local Settings = Window:AddTab({ Title = "Settings" })
 
 Settings:AddKeybind("ToggleKey", {
@@ -106,14 +100,6 @@ Settings:AddKeybind("ToggleKey", {
     Default = Enum.KeyCode.RightControl,
     Callback = function(key)
         DemonUI:Notify({ Title = "Keybind", Content = "Key: "..key.Name, Duration = 2 })
-    end
-})
-
-Settings:AddColorPicker("AccentColor", {
-    Title    = "Accent Color",
-    Default  = Color3.fromRGB(88, 140, 255),
-    Callback = function(c)
-        DemonUI:SetTheme({ Accent = c, TogOn = c, SliderFill = c })
     end
 })
 
