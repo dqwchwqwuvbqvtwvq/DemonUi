@@ -303,7 +303,11 @@ end
 
 function DemonUI:CreateWindow(opts)
     opts = opts or {}
-    local W     = opts.Size        or UDim2.fromOffset(590, 465)
+    -- Size bisa diisi {Width=590, Height=465} atau langsung angka
+    local sizeOpt = opts.Size or {}
+    local WW = (type(sizeOpt) == "table" and sizeOpt.Width)  or sizeOpt.X and sizeOpt.X.Offset or 590
+    local WH = (type(sizeOpt) == "table" and sizeOpt.Height) or sizeOpt.Y and sizeOpt.Y.Offset or 465
+    local W  = UDim2.fromOffset(WW, WH)   -- UDim2 untuk frame
     local TITLE = opts.Title       or "Demon UI"
     local SUB   = opts.SubTitle    or "Made By Jova"
     local MKEY  = opts.MinimizeKey or Enum.KeyCode.RightControl
@@ -326,7 +330,7 @@ function DemonUI:CreateWindow(opts)
     local MF = New("Frame", {
         BackgroundColor3    = T.BG,
         Size                = W,
-        Position            = UDim2.new(0.5, -W.X.Offset / 2, 0.5, -W.Y.Offset / 2),
+        Position            = UDim2.new(0.5, -WW / 2, 0.5, -WH / 2),
         BackgroundTransparency = 1,
         Parent              = SG,
     }, {Corner(UDim.new(0, 10)), Stroke(T.Border)})
@@ -380,10 +384,10 @@ function DemonUI:CreateWindow(opts)
     MinBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
         Body.Visible = not minimized
-        Tw(MF, {Size = minimized and UDim2.new(0, W.X.Offset, 0, 40) or W}, 0.28, Enum.EasingStyle.Quart)
+        Tw(MF, {Size = minimized and UDim2.new(0, WW, 0, 40) or W}, 0.28, Enum.EasingStyle.Quart)
     end)
     CloseBtn.MouseButton1Click:Connect(function()
-        Tw(MF, {Size = UDim2.new(0, W.X.Offset, 0, 0), BackgroundTransparency = 1}, 0.22)
+        Tw(MF, {Size = UDim2.new(0, WW, 0, 0), BackgroundTransparency = 1}, 0.22)
         task.wait(0.25)
         SG:Destroy()
     end)
@@ -392,7 +396,7 @@ function DemonUI:CreateWindow(opts)
         if inp.KeyCode == MKEY then
             minimized = not minimized
             Body.Visible = not minimized
-            Tw(MF, {Size = minimized and UDim2.new(0, W.X.Offset, 0, 40) or W}, 0.28, Enum.EasingStyle.Quart)
+            Tw(MF, {Size = minimized and UDim2.new(0, WW, 0, 40) or W}, 0.28, Enum.EasingStyle.Quart)
         end
     end)
 
@@ -773,7 +777,7 @@ function DemonUI:CreateWindow(opts)
 
     -- Welcome screen → reveal window
     ShowWelcome(SG, function()
-        MF.Size = UDim2.new(0, W.X.Offset, 0, 0)
+        MF.Size = UDim2.new(0, WW, 0, 0)
         Tw(MF, {BackgroundTransparency = 0}, 0.1)
         Tw(MF, {Size = W}, 0.38, Enum.EasingStyle.Back)
     end)
