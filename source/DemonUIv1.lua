@@ -168,130 +168,166 @@ function DemonUI:Notify(opts)
 end
 
 -- ════════════════════════════════════════════════════════════════
--- WELCOME SCREEN
+-- WELCOME SCREEN  (seukuran window, posisi sama, bisa di-drag)
 -- ════════════════════════════════════════════════════════════════
 
-local function ShowWelcome(sg, onDone)
+local function ShowWelcome(parent, ww, wh, posX, posY, onDone)
+    -- Container seukuran window persis
     local overlay = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(6, 7, 14),
-        Size = UDim2.new(1, 0, 1, 0),
-        ZIndex = 100,
-        Parent = sg,
-    })
+        BackgroundColor3 = Color3.fromRGB(8, 9, 18),
+        Size     = UDim2.fromOffset(ww, wh),
+        Position = UDim2.fromOffset(posX, posY),
+        ZIndex   = 50,
+        ClipsDescendants = true,
+        Parent   = parent,
+    }, {Corner(UDim.new(0, 10)), Stroke(T.Border)})
 
-    local function Orb(x, y, size, color)
+    -- drag welcome screen juga
+    MakeDraggable(overlay, overlay)
+
+    -- ── orb glow (posisi relatif terhadap ukuran window) ──
+    local function Orb(rx, ry, size, color)
         local f = New("Frame", {
             BackgroundColor3    = color,
-            BackgroundTransparency = 0.55,
-            Size     = UDim2.new(0, size, 0, size),
-            Position = UDim2.new(0, x, 0, y),
-            ZIndex   = 100,
+            BackgroundTransparency = 0.5,
+            Size     = UDim2.fromOffset(size, size),
+            Position = UDim2.new(rx, -size/2, ry, -size/2),
+            ZIndex   = 51,
             Parent   = overlay,
         }, {New("UICorner", {CornerRadius = UDim.new(0.5, 0)})})
         for i = 1, 3 do
             New("Frame", {
-                BackgroundColor3    = color,
-                BackgroundTransparency = 0.75 + i * 0.07,
-                Size     = UDim2.new(0, size + i * 22, 0, size + i * 22),
-                Position = UDim2.new(0, -i * 11, 0, -i * 11),
-                ZIndex   = 99,
+                BackgroundColor3       = color,
+                BackgroundTransparency = 0.72 + i * 0.08,
+                Size     = UDim2.fromOffset(size + i*20, size + i*20),
+                Position = UDim2.fromOffset(-i*10, -i*10),
+                ZIndex   = 50,
                 Parent   = f,
             }, {New("UICorner", {CornerRadius = UDim.new(0.5, 0)})})
         end
         return f
     end
 
-    local orb1 = Orb(-40, -40, 160, Color3.fromRGB(88, 140, 255))
-    local orb2 = Orb(320, 200, 120, Color3.fromRGB(120, 60, 255))
-    local orb3 = Orb(100, 220, 90,  Color3.fromRGB(50, 180, 255))
+    local orb1 = Orb(0.15, 0.2,  math.floor(ww * 0.28), Color3.fromRGB(88,  140, 255))
+    local orb2 = Orb(0.82, 0.75, math.floor(ww * 0.22), Color3.fromRGB(120, 60,  255))
+    local orb3 = Orb(0.5,  0.85, math.floor(ww * 0.16), Color3.fromRGB(50,  180, 255))
+
+    -- ── teks tengah ──
+    local centerY = wh * 0.36
 
     local title = New("TextLabel", {
-        Text = "", Font = Enum.Font.GothamBold, TextSize = 32,
-        TextColor3 = Color3.fromRGB(230, 238, 255),
+        Text = "", Font = Enum.Font.GothamBold,
+        TextSize = math.clamp(math.floor(ww / 18), 22, 36),
+        TextColor3 = T.TextPri,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 44),
-        Position = UDim2.new(0, 0, 0.38, 0),
+        Position = UDim2.fromOffset(0, centerY),
         TextXAlignment = Enum.TextXAlignment.Center,
-        TextTransparency = 1, ZIndex = 101, Parent = overlay,
+        TextTransparency = 1, ZIndex = 52, Parent = overlay,
     })
     local sub = New("TextLabel", {
-        Text = "Made By Jova", Font = Enum.Font.GothamMedium, TextSize = 14,
-        TextColor3 = Color3.fromRGB(88, 140, 255),
+        Text = "Made By Jova", Font = Enum.Font.GothamMedium,
+        TextSize = math.clamp(math.floor(ww / 40), 11, 15),
+        TextColor3 = T.Accent,
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 22),
-        Position = UDim2.new(0, 0, 0.38, 50),
+        Size = UDim2.new(1, 0, 0, 20),
+        Position = UDim2.fromOffset(0, centerY + 48),
         TextXAlignment = Enum.TextXAlignment.Center,
-        TextTransparency = 1, ZIndex = 101, Parent = overlay,
+        TextTransparency = 1, ZIndex = 52, Parent = overlay,
     })
+
+    -- ── loading bar ──
+    local barW   = math.floor(ww * 0.55)
     local barTrack = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(25, 28, 48),
-        Size = UDim2.new(0, 260, 0, 4),
-        Position = UDim2.new(0.5, -130, 0.38, 90),
-        BackgroundTransparency = 1, ZIndex = 101, Parent = overlay,
+        BackgroundColor3 = Color3.fromRGB(22, 26, 44),
+        Size     = UDim2.fromOffset(barW, 4),
+        Position = UDim2.fromOffset(math.floor((ww - barW) / 2), centerY + 78),
+        BackgroundTransparency = 1, ZIndex = 52, Parent = overlay,
     }, {Corner(UDim.new(0, 2))})
     local barFill = New("Frame", {
-        BackgroundColor3 = Color3.fromRGB(88, 140, 255),
+        BackgroundColor3 = T.Accent,
         Size = UDim2.new(0, 0, 1, 0),
-        ZIndex = 102, Parent = barTrack,
+        ZIndex = 53, Parent = barTrack,
     }, {Corner(UDim.new(0, 2))})
     local loadTxt = New("TextLabel", {
         Text = "Initializing...", Font = Enum.Font.GothamMedium, TextSize = 11,
-        TextColor3 = Color3.fromRGB(88, 140, 255),
+        TextColor3 = T.Accent,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 0, 16),
-        Position = UDim2.new(0, 0, 0.38, 102),
+        Position = UDim2.fromOffset(0, centerY + 90),
         TextXAlignment = Enum.TextXAlignment.Center,
-        TextTransparency = 1, ZIndex = 101, Parent = overlay,
+        TextTransparency = 1, ZIndex = 52, Parent = overlay,
     })
 
-    -- orb float animation
+    -- ── versi kecil di pojok bawah kanan ──
+    New("TextLabel", {
+        Text = "Demon UI  v1.0", Font = Enum.Font.GothamMedium, TextSize = 10,
+        TextColor3 = T.TextDim,
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, -14, 0, 16),
+        Position = UDim2.fromOffset(0, wh - 24),
+        TextXAlignment = Enum.TextXAlignment.Right,
+        ZIndex = 52, Parent = overlay,
+    })
+
+    -- ── orb float ──
+    local ox1, oy1 = ww * 0.15, wh * 0.2
+    local ox2, oy2 = ww * 0.82, wh * 0.75
+    local ox3, oy3 = ww * 0.5,  wh * 0.85
     task.spawn(function()
         local t = 0
         while overlay.Parent do
             t = t + task.wait(0.03)
-            orb1.Position = UDim2.new(0, -40 + math.sin(t * 0.6) * 18,  0, -40 + math.cos(t * 0.5) * 14)
-            orb2.Position = UDim2.new(0, 320 + math.cos(t * 0.45) * 22, 0, 200 + math.sin(t * 0.55) * 16)
-            orb3.Position = UDim2.new(0, 100 + math.sin(t * 0.7) * 12,  0, 220 + math.cos(t * 0.6) * 10)
+            orb1.Position = UDim2.new(0, ox1 + math.sin(t*0.55)*14, 0, oy1 + math.cos(t*0.48)*11)
+            orb2.Position = UDim2.new(0, ox2 + math.cos(t*0.42)*18, 0, oy2 + math.sin(t*0.52)*13)
+            orb3.Position = UDim2.new(0, ox3 + math.sin(t*0.65)*10, 0, oy3 + math.cos(t*0.58)*9)
         end
     end)
 
-    -- sequence
+    -- ── animasi sequence ──
     task.spawn(function()
-        task.wait(0.1)
-        Tw(title, {TextTransparency = 0}, 0.4)
-        Tw(sub,   {TextTransparency = 0}, 0.5)
-        task.wait(0.05)
+        task.wait(0.12)
+
+        -- fade in sub dulu (lebih dramatis)
+        Tw(sub, {TextTransparency = 0}, 0.35)
+        task.wait(0.15)
+
+        -- typewriter title
+        Tw(title, {TextTransparency = 0}, 0.25)
         local full = "Demon UI"
         for i = 1, #full do
             title.Text = string.sub(full, 1, i)
-            task.wait(0.055)
+            task.wait(0.06)
         end
-        task.wait(0.1)
-        Tw(barTrack, {BackgroundTransparency = 0}, 0.3)
-        Tw(loadTxt,  {TextTransparency = 0}, 0.3)
-        task.wait(0.35)
+        task.wait(0.12)
+
+        -- loading bar muncul
+        Tw(barTrack, {BackgroundTransparency = 0}, 0.25)
+        Tw(loadTxt,  {TextTransparency = 0}, 0.25)
+        task.wait(0.3)
 
         local steps = {
-            {0.20, "Loading modules..."},
-            {0.45, "Building UI..."},
-            {0.70, "Applying theme..."},
-            {0.88, "Almost ready..."},
+            {0.18, "Loading modules..."},
+            {0.42, "Building UI..."},
+            {0.68, "Applying theme..."},
+            {0.87, "Almost ready..."},
             {1.00, "Welcome!"},
         }
         for _, s in ipairs(steps) do
-            Tw(barFill, {Size = UDim2.new(s[1], 0, 1, 0)}, 0.35, Enum.EasingStyle.Quart)
+            Tw(barFill, {Size = UDim2.new(s[1], 0, 1, 0)}, 0.32, Enum.EasingStyle.Quart)
             loadTxt.Text = s[2]
-            task.wait(0.38)
+            task.wait(0.35)
         end
-        task.wait(0.2)
+        task.wait(0.18)
 
-        Tw(overlay,  {BackgroundTransparency = 1}, 0.5)
-        Tw(title,    {TextTransparency = 1}, 0.4)
-        Tw(sub,      {TextTransparency = 1}, 0.4)
-        Tw(loadTxt,  {TextTransparency = 1}, 0.3)
-        Tw(barFill,  {BackgroundTransparency = 1}, 0.3)
-        Tw(barTrack, {BackgroundTransparency = 1}, 0.3)
-        task.wait(0.5)
+        -- fade out semua sekaligus
+        Tw(overlay,  {BackgroundTransparency = 1}, 0.45)
+        Tw(title,    {TextTransparency = 1}, 0.3)
+        Tw(sub,      {TextTransparency = 1}, 0.3)
+        Tw(loadTxt,  {TextTransparency = 1}, 0.25)
+        Tw(barFill,  {BackgroundTransparency = 1}, 0.25)
+        Tw(barTrack, {BackgroundTransparency = 1}, 0.25)
+        task.wait(0.48)
         overlay:Destroy()
         if onDone then onDone() end
     end)
@@ -775,11 +811,18 @@ function DemonUI:CreateWindow(opts)
         if self._tabs[i] then self._tabs[i]._select() end
     end
 
-    -- Welcome screen → reveal window
-    ShowWelcome(SG, function()
-        MF.Size = UDim2.new(0, WW, 0, 0)
-        Tw(MF, {BackgroundTransparency = 0}, 0.1)
-        Tw(MF, {Size = W}, 0.38, Enum.EasingStyle.Back)
+    -- Welcome screen seukuran & seposisi window
+    MF.Visible = false
+    task.defer(function()
+        local vp   = workspace.CurrentCamera.ViewportSize
+        local posX = math.floor((vp.X - WW) / 2)
+        local posY = math.floor((vp.Y - WH) / 2)
+        ShowWelcome(SG, WW, WH, posX, posY, function()
+            MF.Visible = true
+            MF.Size = UDim2.fromOffset(WW, 0)
+            Tw(MF, {BackgroundTransparency = 0}, 0.08)
+            Tw(MF, {Size = W}, 0.35, Enum.EasingStyle.Back)
+        end)
     end)
 
     return Win
