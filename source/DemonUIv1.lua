@@ -538,17 +538,25 @@ function DemonUI:CreateWindow(opts)
             o = o or {}
             local row = Row(o.Title or "Button", o.Description, 90)
             local btn = New("TextButton", {Text = o.ButtonText or "Execute", Font = T.Font, TextSize = 12, TextColor3 = T.TextPri, BackgroundColor3 = T.AccentDark, Size = UDim2.new(0, 80, 0, 27), Position = UDim2.new(1, -88, 0.5, -13.5), AutoButtonColor = false, Parent = row}, {Corner(UDim.new(0, 6)), Stroke(T.Accent)})
-            -- hover hanya untuk PC (Mouse), skip untuk touch agar tidak flicker
-            btn.MouseEnter:Connect(function() Tw(btn, {BackgroundColor3 = T.Accent},     0.14) end)
-            btn.MouseLeave:Connect(function() Tw(btn, {BackgroundColor3 = T.AccentDark}, 0.14) end)
-            btn.InputBegan:Connect(function(inp)
-                if not isTap(inp) then return end
+
+            local function doPress()
                 Tw(btn, {BackgroundColor3 = T.Accent, Size = UDim2.new(0, 74, 0, 25)}, 0.08)
-            end)
-            btn.InputEnded:Connect(function(inp)
-                if not isTap(inp) then return end
-                Tw(btn, {BackgroundColor3 = T.AccentDark, Size = UDim2.new(0, 80, 0, 27)}, 0.14, Enum.EasingStyle.Back)
+                task.delay(0.15, function()
+                    Tw(btn, {BackgroundColor3 = T.AccentDark, Size = UDim2.new(0, 80, 0, 27)}, 0.14, Enum.EasingStyle.Back)
+                end)
                 if o.Callback then o.Callback() end
+            end
+
+            -- PC: hover effect
+            btn.MouseEnter:Connect(function() Tw(btn, {BackgroundColor3 = T.Accent}, 0.14) end)
+            btn.MouseLeave:Connect(function() Tw(btn, {BackgroundColor3 = T.AccentDark}, 0.14) end)
+            -- PC: click
+            btn.MouseButton1Click:Connect(doPress)
+            -- Android: touch tap
+            btn.InputBegan:Connect(function(inp)
+                if inp.UserInputType == Enum.UserInputType.Touch then
+                    doPress()
+                end
             end)
         end
 
