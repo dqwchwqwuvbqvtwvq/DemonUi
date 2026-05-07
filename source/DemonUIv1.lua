@@ -568,14 +568,27 @@ function DemonUI:CreateWindow(opts)
             local track = New("TextButton", {Text = "", BackgroundColor3 = val and T.TogOn or T.TogOff, Size = UDim2.new(0, 40, 0, 21), Position = UDim2.new(1, -48, 0.5, -10.5), AutoButtonColor = false, Parent = row}, {Corner(UDim.new(0, 11))})
             local knob  = New("Frame", {BackgroundColor3 = Color3.new(1, 1, 1), Size = UDim2.new(0, 15, 0, 15), Position = val and UDim2.new(0, 22, 0.5, -7.5) or UDim2.new(0, 3, 0.5, -7.5), Parent = track}, {Corner(UDim.new(0, 8))})
             local obj = {Value = val}
+            local debounce = false
             local function Set(v, cb)
                 val = v; obj.Value = v
                 Tw(track, {BackgroundColor3 = v and T.TogOn or T.TogOff}, 0.22)
                 Tw(knob,  {Position = v and UDim2.new(0, 22, 0.5, -7.5) or UDim2.new(0, 3, 0.5, -7.5)}, 0.22, Enum.EasingStyle.Back)
                 if cb and o.Callback then o.Callback(v) end
             end
-            track.MouseButton1Click:Connect(function() Set(not val, true) end)
-            track.InputBegan:Connect(function(inp) if inp.UserInputType == Enum.UserInputType.Touch then Set(not val, true) end end)
+
+            track.MouseButton1Click:Connect(function()
+                if debounce then return end
+                debounce = true
+                Set(not val, true)
+                task.delay(0.35, function() debounce = false end)
+            end)
+            track.InputBegan:Connect(function(inp)
+                if inp.UserInputType ~= Enum.UserInputType.Touch then return end
+                if debounce then return end
+                debounce = true
+                Set(not val, true)
+                task.delay(0.35, function() debounce = false end)
+            end)
             function obj:Set(v) Set(v, true) end
             _G["DemonToggle_" .. (id or "")] = obj
             return obj
